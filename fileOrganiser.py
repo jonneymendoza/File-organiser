@@ -17,6 +17,10 @@ MODE = os.getenv("MODE", "copy").lower()  # "move" or "copy"
 EMAIL = os.getenv("EMAIL")
 SCHEDULE = os.getenv("SCHEDULE", "daily").lower()  # New scheduling variable
 
+# Load permissions setting from environment variable
+PERMISSIONS = os.getenv("PERMISSIONS", "original").lower()
+
+
 # SMTP Configuration
 SMTP_HOST = os.getenv("SMTP_HOST")
 SMTP_PORT = int(os.getenv("SMTP_PORT", 587))
@@ -79,6 +83,7 @@ def organize_file(src_path):
             shutil.move(src_path, dest_path)
         else:
             shutil.copy2(src_path, dest_path)
+        set_permissions(dest_path)
     except Exception as e:
         error_files.append((src_path, str(e)))
         logging.error(f"Error moving {src_path} to {dest_path}: {e}")
@@ -125,6 +130,7 @@ def organize_folder(src_folder):
         else:
             shutil.copytree(src_folder, dest_path)
         moved_dirs.add(src_folder)
+        set_permissions(dest_path)
     except Exception as e:
         error_files.append((src_folder, str(e)))
         logging.error(f"Error moving folder {src_folder}: {e}")
@@ -177,6 +183,43 @@ def send_error_email():
         logging.info(f"Error report emailed to {EMAIL}.")
     except Exception as e:
         logging.error(f"Failed to send error email: {e}")
+
+def set_permissions(target_path):
+    """Set permissions for all files and directories in the target path based on the PERMISSIONS setting."""
+    try:
+        # Determine the permission mode
+        if PERMISSIONS == "original":
+            logging.info(f"Preserving original permissions for {target_path}")
+            return  # Do nothing, keep original permissions
+        elif PERMISSIONS == "read":
+            file_mode = 0o444  # Read-only for files
+            dir_mode = 0o555   # Read and execute for directories
+        elif PERMISSIONS == "write":
+            file_mode = 0o666  # Read and write for files
+            dir_mode = 0o777   # Read, write, and execute for directories
+        elif PERMISSIONS == "full":
+            file_mode = 0o777  # Full permissions for files
+            dir_mode = 0o777   # Full permissions for directories
+        else:
+            logging.warning(f"Invalid PERMISSIONS value: {PERMISSIONS}. Using 'original'.")
+            return
+
+        # Apply the permissions recursively
+        for root, dirs, files in os.walk(target_path):
+            for dir_name in dirs:
+                dir_path = os.path.join(root, dir_name)
+                os.chmod(dir_path, dir_mode)
+            for file_name in files:
+                file_path = os.path.join(root, file_name)
+                os.chmod(file_path, file_mode)
+        
+        # Change the root directory itself
+        os.chmod(target_path, dir_mode)
+
+        logging.info(f"Permissions set to {PERMISSIONS} for {target_path}")
+    except Exception as e:
+        logging.error(f"Failed to set permissions for {target_path}: {e}")
+
 
 if __name__ == "__main__":
     logging.info("Starting File Organizer with internal scheduler.")

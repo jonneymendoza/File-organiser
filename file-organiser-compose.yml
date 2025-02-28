@@ -18,4 +18,5 @@ services:
       SMTP_PASSWORD: "password"
       SMTP_USE_TLS: "true"
       SCHEDULE: "300"
+      PERMISSIONS: "full" # Can be original, read, write, or full
     restart: unless-stopped
