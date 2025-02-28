@@ -40,3 +40,4 @@ Clone this repository to your local machine:
 ```sh
 git clone https://github.com/your-username/file-organizer.git
 cd file-organizer
+```
