@@ -40,3 +40,14 @@ Clone this repository to your local machine:
 ```sh
 git clone https://github.com/your-username/file-organizer.git
 cd file-organizer
+
+tep 2: Build the Docker Image
+Before you can run the service, you need to build the Docker image using Docker Compose:
+
+sh
+Copy
+Edit
+docker-compose -f file-organiser-compose.yml build
+This command builds the Docker image based on the Dockerfile in the current directory.
+It prepares the container for running the fileOrganiser.py script.
+The image is named fileorganizer:latest by default.
